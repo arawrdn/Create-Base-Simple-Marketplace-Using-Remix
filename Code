@@ -1,0 +1,50 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.13;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract Marketplace is Ownable {
+    struct Item {
+        address seller;
+        uint256 price;
+        bool sold;
+    }
+
+    IERC20 public paymentToken; // ERC20 token for payment
+    mapping(uint256 => Item) public items;
+    uint256 public itemCount;
+
+    event ItemListed(uint256 indexed itemId, address indexed seller, uint256 price);
+    event ItemBought(uint256 indexed itemId, address indexed buyer, uint256 price);
+
+    constructor(address _paymentToken) {
+        paymentToken = IERC20(_paymentToken);
+    }
+
+    function listItem(uint256 _price) external returns (uint256) {
+        require(_price > 0, "Price must be greater than zero");
+
+        itemCount++;
+        items[itemCount] = Item(msg.sender, _price, false);
+
+        emit ItemListed(itemCount, msg.sender, _price);
+        return itemCount;
+    }
+
+    function buyItem(uint256 _itemId) external {
+        Item storage item = items[_itemId];
+        require(item.seller != address(0), "Item does not exist");
+        require(!item.sold, "Item already sold");
+        require(paymentToken.balanceOf(msg.sender) >= item.price, "Insufficient balance");
+
+        item.sold = true;
+        paymentToken.transferFrom(msg.sender, item.seller, item.price);
+
+        emit ItemBought(_itemId, msg.sender, item.price);
+    }
+
+    function withdrawTokens(uint256 _amount) external onlyOwner {
+        paymentToken.transfer(msg.sender, _amount);
+    }
+}
