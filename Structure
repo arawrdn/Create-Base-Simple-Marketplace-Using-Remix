@@ -1,0 +1,11 @@
+base-simple-marketplace/
+│
+├─ contracts/
+│   ├─ Marketplace.sol     # Smart contract marketplace
+│
+├─ scripts/
+│   ├─ deploy.js           # Optional deploy script
+│
+├─ README.md               # Full deployment and usage guide
+│
+└─ .gitignore
